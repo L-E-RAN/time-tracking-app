@@ -49,6 +49,7 @@ export default function TaskTracker({ user }) {
     }
   };
 
+  console.log("END TASK CLICKED");
   const endTask = async () => {
     if (!taskName || !startTime) return alert("No task in progress");
 
