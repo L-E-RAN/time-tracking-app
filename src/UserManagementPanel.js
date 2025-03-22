@@ -1,4 +1,4 @@
-// UserManagementPanel.js - כולל עיצוב, תצוגת שם ומייל, כרטיסים יפים ומרוכזים
+// UserManagementPanel.js - כולל חיפוש לפי שם או מייל
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -13,6 +13,7 @@ export default function UserManagementPanel({ onBack }) {
   const [users, setUsers] = useState([]);
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
+  const [search, setSearch] = useState("");
 
   const fetchUsers = async () => {
     const snapshot = await getDocs(collection(db, "users"));
@@ -49,6 +50,14 @@ export default function UserManagementPanel({ onBack }) {
     fetchUsers();
   };
 
+  const filteredUsers = users.filter(user => {
+    const keyword = search.toLowerCase();
+    return (
+      (user.name && user.name.toLowerCase().includes(keyword)) ||
+      (user.email && user.email.toLowerCase().includes(keyword))
+    );
+  });
+
   return (
     <div className="container">
       <h2 style={{ textAlign: "center" }}>ניהול משתמשים</h2>
@@ -56,8 +65,18 @@ export default function UserManagementPanel({ onBack }) {
         <button className="btn btn-primary" onClick={onBack}>חזור</button>
       </div>
 
+      <div style={{ maxWidth: 400, margin: "0 auto", marginBottom: 20 }}>
+        <input
+          type="text"
+          placeholder="חפש לפי שם או אימייל..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", padding: 8, borderRadius: 6 }}
+        />
+      </div>
+
       <ul style={{ maxWidth: 600, margin: "0 auto", padding: 0 }}>
-        {users.map(user => (
+        {filteredUsers.map(user => (
           <li
             key={user.id}
             style={{
