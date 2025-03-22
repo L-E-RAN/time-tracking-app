@@ -1,19 +1,67 @@
 /* src/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap');
+
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8f9fa;
+  font-family: 'Rubik', sans-serif;
+  background: linear-gradient(135deg, #c9d6ff, #e2e2e2);
   margin: 0;
   padding: 0;
   color: #333;
+  min-height: 100vh;
+  direction: rtl;
+}
+
+header {
+  background-color: #343a40;
+  color: white;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  max-width: 1024px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.logout-btn {
+  background-color: #dc3545;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+main {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
 }
 
 .container {
-  max-width: 600px;
-  margin: 40px auto;
+  max-width: 620px;
+  width: 100%;
   background-color: #fff;
   padding: 30px;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  text-align: right;
 }
 
 h1, h2, h3 {
@@ -22,7 +70,6 @@ h1, h2, h3 {
 }
 
 button {
-  background-color: #007bff;
   border: none;
   padding: 10px 16px;
   margin: 5px;
@@ -33,7 +80,30 @@ button {
   transition: background-color 0.3s;
 }
 
-button:hover {
+.btn {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-login {
+  background-color: #28a745;
+}
+
+.btn-login:hover {
+  background-color: #218838;
+}
+
+.btn-register {
+  background-color: #007bff;
+}
+
+.btn-register:hover {
   background-color: #0056b3;
 }
 
@@ -62,6 +132,22 @@ li {
   margin-bottom: 8px;
   border-radius: 8px;
   font-size: 15px;
+  text-align: right;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+li span {
+  flex-grow: 1;
+  display: inline-block;
+}
+
+li button {
+  background-color: #dc3545;
+  font-size: 14px;
+  padding: 6px 10px;
+  margin: 0;
 }
 
 p {
@@ -76,34 +162,13 @@ p {
     padding: 20px;
   }
 
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
   button {
     width: 100%;
   }
-}
-
-.btn {
-  width: 100%;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.btn-login {
-  background-color: #28a745;
-}
-
-.btn-login:hover {
-  background-color: #218838;
-}
-
-.btn-register {
-  background-color: #007bff;
-}
-
-.btn-register:hover {
-  background-color: #0056b3;
 }
