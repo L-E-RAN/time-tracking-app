@@ -1,5 +1,8 @@
+// AuthForm.js - יצירת מסמך משתמש חדש עם email ו-isAdmin
 import React, { useState } from "react";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
 
 export default function AuthForm({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -14,7 +17,20 @@ export default function AuthForm({ onLogin }) {
       const userCredential = isLogin
         ? await signInWithEmailAndPassword(auth, email, password)
         : await createUserWithEmailAndPassword(auth, email, password);
-      onLogin(userCredential.user);
+
+      const user = userCredential.user;
+
+      // יצירת מסמך משתמש אם לא קיים
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          isAdmin: false,
+        });
+      }
+
+      onLogin(user);
     } catch (err) {
       setError(err.message);
     }
