@@ -1,5 +1,6 @@
 
 // src/App.js
+import "./style.css";
 import TaskTracker from "./TaskTracker";
 import React, { useState } from "react";
 import AuthForm from "./AuthForm";
@@ -11,6 +12,7 @@ function App() {
     return <AuthForm onLogin={(u) => setUser(u)} />;
   }
 
+  
   return (
     <div style={{ padding: 20 }}>
       <h1>ברוך הבא {user.email}</h1>
