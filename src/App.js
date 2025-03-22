@@ -1,3 +1,5 @@
+import TaskTracker from "./TaskTracker";
+
 // src/App.js
 import React, { useState } from "react";
 import AuthForm from "./AuthForm";
