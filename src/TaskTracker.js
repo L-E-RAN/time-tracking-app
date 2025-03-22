@@ -61,6 +61,14 @@ export default function TaskTracker({ user }) {
     return `${day}/${month}/${year}`;
   };
 
+  const formatTime = (dateObj) => {
+    return dateObj.toLocaleTimeString("he-IL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  };
+
   const formatElapsed = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -91,8 +99,8 @@ export default function TaskTracker({ user }) {
       userId: user.uid,
       task: taskName,
       date: formatDate(startTime),
-      from: startTime.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }),
-      to: endTime.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }),
+      from: formatTime(startTime),
+      to: formatTime(endTime),
       duration: `${hours}h ${minutes}m`,
     };
 
