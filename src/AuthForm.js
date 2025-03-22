@@ -38,13 +38,15 @@ export default function AuthForm({ onLogin }) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="btn btn-login">
-          {isLogin ? "כניסה" : "צור משתמש"}
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+          <button type="submit" className="btn btn-login" style={{ maxWidth: 300 }}>
+            {isLogin ? "כניסה" : "צור משתמש"}
+          </button>
+          <button onClick={() => setIsLogin(!isLogin)} className="btn btn-register" style={{ maxWidth: 300 }}>
+            {isLogin ? "עדיין אין לך משתמש? לחץ כאן" : "כבר רשום? התחבר"}
+          </button>
+        </div>
       </form>
-      <button onClick={() => setIsLogin(!isLogin)} className="btn btn-register">
-        {isLogin ? "עדיין אין לך משתמש? לחץ כאן" : "כבר רשום? התחבר"}
-      </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
     </>
   );
