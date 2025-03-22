@@ -91,8 +91,8 @@ export default function TaskTracker({ user }) {
       userId: user.uid,
       task: taskName,
       date: formatDate(startTime),
-      from: startTime.toLocaleTimeString(),
-      to: endTime.toLocaleTimeString(),
+      from: startTime.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }),
+      to: endTime.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }),
       duration: `${hours}h ${minutes}m`,
     };
 
@@ -124,9 +124,11 @@ export default function TaskTracker({ user }) {
     <div style={{ marginTop: 20 }}>
       <h2>המשימות שלך ל־{formatDate(new Date())}</h2>
       <p>סה״כ זמן עבודה: {totalHours}h {totalRemainder}m</p>
-      <button onClick={startTask}>Start Task</button>
-      <button onClick={endTask} disabled={!timerActive}>End Task</button>
-      <button onClick={downloadExcel}>Download Excel</button>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+        <button className="btn btn-primary" onClick={startTask}>Start Task</button>
+        <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>End Task</button>
+        <button className="btn btn-primary" onClick={downloadExcel}>Download Excel</button>
+      </div>
       {timerActive && (
         <p>
           <strong>Task:</strong> {taskName} | <strong>Elapsed:</strong> {formatElapsed(elapsed)}
@@ -134,9 +136,9 @@ export default function TaskTracker({ user }) {
       )}
       <ul>
         {logs.map((log) => (
-          <li key={log.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <li key={log.id}>
             <span>🕒 <strong>{log.task}</strong> | {log.date} | {log.from} - {log.to} | {log.duration}</span>
-            <button onClick={() => deleteTask(log.id)} style={{ background: "#dc3545", marginLeft: 10 }}>🗑️</button>
+            <button onClick={() => deleteTask(log.id)}>🗑️</button>
           </li>
         ))}
       </ul>
