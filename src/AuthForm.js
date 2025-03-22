@@ -1,12 +1,13 @@
-// AuthForm.js - יצירת מסמך משתמש חדש עם email ו-isAdmin
+// AuthForm.js - הוספת שדה שם בעת הרשמה ושמירתו במסמך המשתמש
 import React, { useState } from "react";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 export default function AuthForm({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState(null);
 
@@ -14,20 +15,26 @@ export default function AuthForm({ onLogin }) {
     e.preventDefault();
     const auth = getAuth();
     try {
-      const userCredential = isLogin
-        ? await signInWithEmailAndPassword(auth, email, password)
-        : await createUserWithEmailAndPassword(auth, email, password);
+      let userCredential;
+      if (isLogin) {
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+      }
 
       const user = userCredential.user;
-
-      // יצירת מסמך משתמש אם לא קיים
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
+
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           email: user.email,
           isAdmin: false,
+          name: user.displayName || name || user.email.split("@")[0]
         });
+      } else if (!userSnap.data().name && name) {
+        await updateDoc(userRef, { name });
       }
 
       onLogin(user);
@@ -40,6 +47,15 @@ export default function AuthForm({ onLogin }) {
     <>
       <h2>{isLogin ? "התחברות" : "הרשמה"}</h2>
       <form onSubmit={handleSubmit}>
+        {!isLogin && (
+          <input
+            type="text"
+            placeholder="שם מלא"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        )}
         <input
           type="email"
           placeholder="אימייל"
