@@ -124,7 +124,7 @@ export default function TaskTracker({ user }) {
     <div style={{ marginTop: 20 }}>
       <h2>המשימות שלך ל־{formatDate(new Date())}</h2>
       <p>סה״כ זמן עבודה: {totalHours}h {totalRemainder}m</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
         <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>סיום משימה</button>
         <button className="btn btn-primary" onClick={downloadExcel}>יצוא לקובץ אקסל</button>
