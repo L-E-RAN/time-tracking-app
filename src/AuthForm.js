@@ -45,12 +45,14 @@ export default function AuthForm({ onLogin }) {
           required
           style={{ display: "block", marginBottom: 10, width: "100%" }}
         />
-        <button type="submit">{isLogin ? "Login" : "Register"}</button>
-        <button type="submit" className="btn btn-login">
-  {isLogin ? "Login" : "Register"}
-</button>
+        <button type="submit" className="btn btn-login">{isLogin ? "Login" : "Register"}</button>
       </form>
       <button onClick={() => setIsLogin(!isLogin)} style={{ marginTop: 10 }}>
+      <button onClick={() => setIsLogin(!isLogin)} className="btn btn-register">  {isLogin ? "Create account" : "Have an account? Login"}</button>
+
+
+
+
         {isLogin ? "Create account" : "Have an account? Login"}
       </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
