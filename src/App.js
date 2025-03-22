@@ -11,27 +11,7 @@ export default function App() {
   const [elapsed, setElapsed] = useState(0);
 
 
-  import React, { useState } from "react";
-import AuthForm from "./AuthForm";
-
-function App() {
-  const [user, setUser] = useState(null);
-
-  if (!user) {
-    return <AuthForm onLogin={(u) => setUser(u)} />;
-  }
-
-  return (
-    <div style={{ padding: 20 }}>
-      <h1>ברוך הבא {user.email}</h1>
-      <button onClick={() => setUser(null)}>Logout</button>
-      {/* כאן ייכנס הקוד של המעקב משימות בעתיד */}
-    </div>
-  );
-}
-
-export default App;
-
+  
 
 
   useEffect(() => {
