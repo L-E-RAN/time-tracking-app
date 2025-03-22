@@ -20,6 +20,17 @@ export default function TaskTracker({ user }) {
   const [totalMinutes, setTotalMinutes] = useState(0);
 
   useEffect(() => {
+    const savedStart = localStorage.getItem("task_start");
+    const savedName = localStorage.getItem("task_name");
+    if (savedStart && savedName) {
+      const parsedStart = new Date(savedStart);
+      setStartTime(parsedStart);
+      setTaskName(savedName);
+      setTimerActive(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (timerActive && startTime) {
       const interval = setInterval(() => {
         setElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
@@ -77,12 +88,19 @@ export default function TaskTracker({ user }) {
   };
 
   const startTask = () => {
+    if (timerActive) {
+      alert("יש כבר משימה פעילה! סיים אותה לפני שתתחיל חדשה.");
+      return;
+    }
     const name = prompt("הכנס שם משימה:");
     if (name) {
+      const now = new Date();
       setTaskName(name);
-      setStartTime(new Date());
+      setStartTime(now);
       setElapsed(0);
       setTimerActive(true);
+      localStorage.setItem("task_start", now.toISOString());
+      localStorage.setItem("task_name", name);
     }
   };
 
@@ -110,6 +128,8 @@ export default function TaskTracker({ user }) {
     setStartTime(null);
     setElapsed(0);
     setTimerActive(false);
+    localStorage.removeItem("task_start");
+    localStorage.removeItem("task_name");
   };
 
   const deleteTask = async (id) => {
