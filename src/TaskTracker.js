@@ -1,4 +1,4 @@
-// שינויים ב־TaskTracker.js (רק החלקים הרלוונטיים מוצגים)
+// TaskTracker.js - עדכון עיצוב כפתורים, עריכת קטגוריה עם dropdown, מיון הפוך של משימות, מרכז כפתורים, החזרת כפתור יצוא
 
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
@@ -17,8 +17,8 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-// צבעים לגרף
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
+const CATEGORY_OPTIONS = ["פיתוח", "תמיכה", "שיווק", "מנהלה", "אחר"];
 
 export default function TaskTracker({ user }) {
   const [taskName, setTaskName] = useState("");
@@ -27,7 +27,11 @@ export default function TaskTracker({ user }) {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [totalMinutes, setTotalMinutes] = useState(0);
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
+  const [showCategorySelect, setShowCategorySelect] = useState(false);
+  const [editLogId, setEditLogId] = useState(null);
+  const [editCategory, setEditCategory] = useState("");
+  const [editTaskName, setEditTaskName] = useState("");
 
   useEffect(() => {
     const savedStart = localStorage.getItem("task_start");
@@ -37,7 +41,7 @@ export default function TaskTracker({ user }) {
       const parsedStart = new Date(savedStart);
       setStartTime(parsedStart);
       setTaskName(savedName);
-      setCategory(savedCat || "");
+      setCategory(savedCat || CATEGORY_OPTIONS[0]);
       setTimerActive(true);
     }
   }, []);
@@ -56,7 +60,7 @@ export default function TaskTracker({ user }) {
       const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setLogs(data);
+      setLogs(data.sort((a, b) => new Date(b.date.split("/").reverse().join("/")) - new Date(a.date.split("/").reverse().join("/")) || b.from.localeCompare(a.from)));
 
       const today = formatDate(new Date());
       const todayLogs = data.filter(log => log.date === today);
@@ -83,18 +87,21 @@ export default function TaskTracker({ user }) {
   const startTask = () => {
     if (timerActive) return alert("יש כבר משימה פעילה!");
     const name = prompt("הכנס שם משימה:");
-    const cat = prompt("הכנס קטגוריה (למשל: פיתוח/תמיכה):");
     if (name) {
-      const now = new Date();
       setTaskName(name);
-      setCategory(cat || "כללי");
-      setStartTime(now);
-      setElapsed(0);
-      setTimerActive(true);
-      localStorage.setItem("task_start", now.toISOString());
-      localStorage.setItem("task_name", name);
-      localStorage.setItem("task_category", cat || "");
+      setShowCategorySelect(true);
     }
+  };
+
+  const confirmStartTask = () => {
+    const now = new Date();
+    setStartTime(now);
+    setElapsed(0);
+    setTimerActive(true);
+    localStorage.setItem("task_start", now.toISOString());
+    localStorage.setItem("task_name", taskName);
+    localStorage.setItem("task_category", category);
+    setShowCategorySelect(false);
   };
 
   const endTask = async () => {
@@ -111,15 +118,15 @@ export default function TaskTracker({ user }) {
       from: formatTime(startTime),
       to: formatTime(endTime),
       duration: `${hours}h ${minutes}m`,
-      category: category || "כללי"
+      category: category || CATEGORY_OPTIONS[0]
     };
 
     const docRef = await addDoc(collection(db, "tasks"), log);
-    setLogs([...logs, { id: docRef.id, ...log }]);
+    setLogs(prev => [{ id: docRef.id, ...log }, ...prev]);
     setTaskName("");
     setStartTime(null);
     setElapsed(0);
-    setCategory("");
+    setCategory(CATEGORY_OPTIONS[0]);
     setTimerActive(false);
     localStorage.clear();
   };
@@ -129,22 +136,32 @@ export default function TaskTracker({ user }) {
     setLogs(logs.filter((log) => log.id !== id));
   };
 
-  const editTask = async (log) => {
-    const newName = prompt("שם חדש למשימה:", log.task);
-    const newCat = prompt("קטגוריה חדשה:", log.category);
-    if (newName) {
-      const ref = doc(db, "tasks", log.id);
-      await updateDoc(ref, { task: newName, category: newCat });
-      setLogs(logs.map(l => l.id === log.id ? { ...l, task: newName, category: newCat } : l));
-    }
+  const startEditTask = (log) => {
+    setEditLogId(log.id);
+    setEditTaskName(log.task);
+    setEditCategory(log.category || CATEGORY_OPTIONS[0]);
+  };
+
+  const saveEditTask = async () => {
+    const ref = doc(db, "tasks", editLogId);
+    await updateDoc(ref, { task: editTaskName, category: editCategory });
+    setLogs(logs.map(l => l.id === editLogId ? { ...l, task: editTaskName, category: editCategory } : l));
+    setEditLogId(null);
+  };
+
+  const downloadExcel = () => {
+    const exportLogs = logs.map(({ id, ...rest }) => rest);
+    const worksheet = XLSX.utils.json_to_sheet(exportLogs);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tasks");
+    XLSX.writeFile(workbook, `tasks_${user.email}.xlsx`);
   };
 
   const totalHours = Math.floor(totalMinutes / 60);
   const totalRemainder = totalMinutes % 60;
 
-  // גרפים לפי קטגוריה וזמן יומי
   const categoryStats = logs.reduce((acc, log) => {
-    const cat = log.category || "כללי";
+    const cat = log.category || CATEGORY_OPTIONS[0];
     const [h, m] = log.duration.replace("h", "").replace("m", "").split(" ").map(Number);
     acc[cat] = (acc[cat] || 0) + h * 60 + m;
     return acc;
@@ -164,10 +181,23 @@ export default function TaskTracker({ user }) {
       <h2>המשימות שלך ל־{formatDate(new Date())}</h2>
       <p>סה״כ זמן עבודה: {totalHours}h {totalRemainder}m</p>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
         <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>סיום משימה</button>
+        <button className="btn btn-primary" onClick={downloadExcel}>יצוא לאקסל</button>
       </div>
+
+      {showCategorySelect && (
+        <div style={{ margin: "10px 0" }}>
+          <label>בחר קטגוריה:</label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CATEGORY_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+          <button className="btn btn-primary" onClick={confirmStartTask}>אישור</button>
+        </div>
+      )}
 
       {timerActive && (
         <div>
@@ -179,9 +209,25 @@ export default function TaskTracker({ user }) {
       <ul>
         {logs.map((log) => (
           <li key={log.id}>
-            <span>🕒 <strong>{log.task}</strong> ({log.category}) | {log.date} | {log.from} - {log.to} | {log.duration}</span>
-            <button onClick={() => editTask(log)}>✏️</button>
-            <button onClick={() => deleteTask(log.id)}>🗑️</button>
+            {editLogId === log.id ? (
+              <>
+                <input value={editTaskName} onChange={(e) => setEditTaskName(e.target.value)} />
+                <select value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
+                  {CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <button className="btn btn-login" onClick={saveEditTask}>שמור</button>
+              </>
+            ) : (
+              <>
+                <span>🕒 <strong>{log.task}</strong> ({log.category}) | {log.date} | {log.from} - {log.to} | {log.duration}</span>
+                <div style={{ display: "flex", gap: "5px" }}>
+                  <button className="btn btn-login" onClick={() => startEditTask(log)}>ערוך</button>
+                  <button className="btn btn-primary" style={{ backgroundColor: '#dc3545' }} onClick={() => deleteTask(log.id)}>מחק</button>
+                </div>
+              </>
+            )}
           </li>
         ))}
       </ul>
