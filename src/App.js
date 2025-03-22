@@ -9,7 +9,7 @@ function App() {
   return (
     <>
       <header>
-        <img src="/logo192.png" alt="Logo" style={{ height: 24, marginRight: 10, verticalAlign: "middle" }} />
+        <img src="/logo192.png" alt="Logo" style={{ height: 32, verticalAlign: "middle", marginRight: 10 }} />
         Time Tracking App
       </header>
       <main>
@@ -19,7 +19,7 @@ function App() {
           </div>
         ) : (
           <div className="container">
-            <h1>ברוך הבא {user.email}</h1>
+            <h1>המשימות היומיות שלך</h1>
             <button onClick={() => setUser(null)}>Logout</button>
             <TaskTracker user={user} />
           </div>
