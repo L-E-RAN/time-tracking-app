@@ -51,7 +51,6 @@ export default function App() {
     }
   }, [taskName, startTime]);
 
-  <h1>Time Tracking App 💼</h1>
 
   const formatElapsed = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -136,7 +135,7 @@ export default function App() {
 
   return (
     <div style={{ padding: 20, maxWidth: 600, margin: 'auto' }}>
-      <h1>Time Tracking App</h1>
+      <h1>Time Tracking</h1>
       <div style={{ marginBottom: 10 }}>
         <button onClick={startTask}>Start Task Logging</button>
         <button onClick={endTask}>End Task Logging</button>
