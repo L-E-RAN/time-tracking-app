@@ -9,7 +9,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
 
-  const isAdmin = user && user.email === "eliran@example.com"; // שנה לפי המייל שלך
+  const isAdmin = user && user.email === "eliran.ashwal@gmail.com"; // שנה לפי המייל שלך
 
   return (
     <>
