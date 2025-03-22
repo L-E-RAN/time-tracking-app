@@ -7,23 +7,65 @@ export default function App() {
   const [startTime, setStartTime] = useState(null);
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [timerActive, setTimerActive] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     const storedLogs = localStorage.getItem("taskLogs");
     if (storedLogs) {
       setLogs(JSON.parse(storedLogs));
     }
+
+    const savedTask = localStorage.getItem("currentTask");
+    const savedStart = localStorage.getItem("startTime");
+    if (savedTask && savedStart) {
+      const start = new Date(savedStart);
+      setTaskName(savedTask);
+      setStartTime(start);
+      setTimerActive(true);
+      setElapsed(Math.floor((Date.now() - start.getTime()) / 1000));
+    }
   }, []);
+
+  useEffect(() => {
+    let interval;
+    if (timerActive && startTime) {
+      interval = setInterval(() => {
+        setElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, startTime]);
 
   useEffect(() => {
     localStorage.setItem("taskLogs", JSON.stringify(logs));
   }, [logs]);
 
+  useEffect(() => {
+    if (taskName && startTime) {
+      localStorage.setItem("currentTask", taskName);
+      localStorage.setItem("startTime", startTime.toISOString());
+    } else {
+      localStorage.removeItem("currentTask");
+      localStorage.removeItem("startTime");
+    }
+  }, [taskName, startTime]);
+
+  const formatElapsed = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}h ${m}m ${s}s`;
+  };
+
   const startTask = () => {
     const name = prompt("Enter task name:");
     if (name) {
+      const now = new Date();
       setTaskName(name);
-      setStartTime(new Date());
+      setStartTime(now);
+      setTimerActive(true);
+      setElapsed(0);
     }
   };
 
@@ -48,6 +90,8 @@ export default function App() {
     setLogs([...logs, log]);
     setTaskName("");
     setStartTime(null);
+    setTimerActive(false);
+    setElapsed(0);
   };
 
   const endDay = () => {
@@ -83,8 +127,7 @@ export default function App() {
       message: content || "No tasks logged today."
     };
 
-    emailjs.send(
-      "service_dxzufpm", "template_tsxpxic", templateParams, "F7614fNyp8GXf6mIj")
+    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams, "YOUR_USER_ID")
       .then(() => alert("Email sent!"))
       .catch(err => alert("Email failed: " + err.text));
   };
@@ -101,6 +144,12 @@ export default function App() {
         <button onClick={downloadExcel}>Download Excel Report</button>
         <button onClick={sendEmail}>Send by Email</button>
       </div>
+      {taskName && timerActive && (
+        <div>
+          <strong>Task in progress:</strong> {taskName}<br />
+          <strong>Elapsed Time:</strong> {formatElapsed(elapsed)}
+        </div>
+      )}
       {summary && (
         <div>
           <h3>Daily Summary ({summary.date})</h3>
