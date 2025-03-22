@@ -1,3 +1,5 @@
+// שינויים ב־TaskTracker.js (רק החלקים הרלוונטיים מוצגים)
+
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -8,8 +10,15 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  updateDoc
 } from "firebase/firestore";
 import * as XLSX from "xlsx";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
+} from 'recharts';
+
+// צבעים לגרף
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
 
 export default function TaskTracker({ user }) {
   const [taskName, setTaskName] = useState("");
@@ -18,14 +27,17 @@ export default function TaskTracker({ user }) {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [totalMinutes, setTotalMinutes] = useState(0);
+  const [category, setCategory] = useState("");
 
   useEffect(() => {
     const savedStart = localStorage.getItem("task_start");
     const savedName = localStorage.getItem("task_name");
+    const savedCat = localStorage.getItem("task_category");
     if (savedStart && savedName) {
       const parsedStart = new Date(savedStart);
       setStartTime(parsedStart);
       setTaskName(savedName);
+      setCategory(savedCat || "");
       setTimerActive(true);
     }
   }, []);
@@ -41,10 +53,7 @@ export default function TaskTracker({ user }) {
 
   useEffect(() => {
     const fetchLogs = async () => {
-      const q = query(
-        collection(db, "tasks"),
-        where("userId", "==", user.uid)
-      );
+      const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setLogs(data);
@@ -52,11 +61,7 @@ export default function TaskTracker({ user }) {
       const today = formatDate(new Date());
       const todayLogs = data.filter(log => log.date === today);
       const minutes = todayLogs.reduce((sum, log) => {
-        const [h, m] = log.duration
-          .replace("h", "")
-          .replace("m", "")
-          .split(" ")
-          .map(Number);
+        const [h, m] = log.duration.replace("h", "").replace("m", "").split(" ").map(Number);
         return sum + h * 60 + m;
       }, 0);
       setTotalMinutes(minutes);
@@ -72,57 +77,30 @@ export default function TaskTracker({ user }) {
     return `${day}/${month}/${year}`;
   };
 
-  const formatTime = (dateObj) => {
-    return dateObj.toLocaleTimeString("he-IL", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    });
-  };
-
-  const formatElapsed = (seconds) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h}h ${m}m ${s}s`;
-  };
+  const formatTime = (dateObj) => dateObj.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const formatElapsed = (seconds) => `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m ${seconds % 60}s`;
 
   const startTask = () => {
-    if (timerActive) {
-      alert("יש כבר משימה פעילה! סיים אותה לפני שתתחיל חדשה.");
-      return;
-    }
+    if (timerActive) return alert("יש כבר משימה פעילה!");
     const name = prompt("הכנס שם משימה:");
+    const cat = prompt("הכנס קטגוריה (למשל: פיתוח/תמיכה):");
     if (name) {
       const now = new Date();
       setTaskName(name);
+      setCategory(cat || "כללי");
       setStartTime(now);
       setElapsed(0);
       setTimerActive(true);
       localStorage.setItem("task_start", now.toISOString());
       localStorage.setItem("task_name", name);
-    }
-  };
-
-  const cancelTask = () => {
-    if (!timerActive) return;
-    const confirmCancel = window.confirm("לבטל את המשימה הפעילה?");
-    if (confirmCancel) {
-      setTaskName("");
-      setStartTime(null);
-      setElapsed(0);
-      setTimerActive(false);
-      localStorage.removeItem("task_start");
-      localStorage.removeItem("task_name");
+      localStorage.setItem("task_category", cat || "");
     }
   };
 
   const endTask = async () => {
-    if (!taskName || !startTime) return alert("אין משימה פעילה כעת");
-
+    if (!taskName || !startTime) return alert("אין משימה פעילה");
     const endTime = new Date();
-    const durationMs = endTime - startTime;
-    const durationMin = Math.floor(durationMs / 60000);
+    const durationMin = Math.floor((endTime - startTime) / 60000);
     const hours = Math.floor(durationMin / 60);
     const minutes = durationMin % 60;
 
@@ -133,6 +111,7 @@ export default function TaskTracker({ user }) {
       from: formatTime(startTime),
       to: formatTime(endTime),
       duration: `${hours}h ${minutes}m`,
+      category: category || "כללי"
     };
 
     const docRef = await addDoc(collection(db, "tasks"), log);
@@ -140,9 +119,9 @@ export default function TaskTracker({ user }) {
     setTaskName("");
     setStartTime(null);
     setElapsed(0);
+    setCategory("");
     setTimerActive(false);
-    localStorage.removeItem("task_start");
-    localStorage.removeItem("task_name");
+    localStorage.clear();
   };
 
   const deleteTask = async (id) => {
@@ -150,40 +129,85 @@ export default function TaskTracker({ user }) {
     setLogs(logs.filter((log) => log.id !== id));
   };
 
-  const downloadExcel = () => {
-    const exportLogs = logs.map(({ id, ...rest }) => rest);
-    const worksheet = XLSX.utils.json_to_sheet(exportLogs);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Tasks");
-    XLSX.writeFile(workbook, `tasks_${user.email}.xlsx`);
+  const editTask = async (log) => {
+    const newName = prompt("שם חדש למשימה:", log.task);
+    const newCat = prompt("קטגוריה חדשה:", log.category);
+    if (newName) {
+      const ref = doc(db, "tasks", log.id);
+      await updateDoc(ref, { task: newName, category: newCat });
+      setLogs(logs.map(l => l.id === log.id ? { ...l, task: newName, category: newCat } : l));
+    }
   };
 
   const totalHours = Math.floor(totalMinutes / 60);
   const totalRemainder = totalMinutes % 60;
 
+  // גרפים לפי קטגוריה וזמן יומי
+  const categoryStats = logs.reduce((acc, log) => {
+    const cat = log.category || "כללי";
+    const [h, m] = log.duration.replace("h", "").replace("m", "").split(" ").map(Number);
+    acc[cat] = (acc[cat] || 0) + h * 60 + m;
+    return acc;
+  }, {});
+  const categoryData = Object.entries(categoryStats).map(([name, value]) => ({ name, value }));
+
+  const dailyStats = logs.reduce((acc, log) => {
+    acc[log.date] = acc[log.date] || 0;
+    const [h, m] = log.duration.replace("h", "").replace("m", "").split(" ").map(Number);
+    acc[log.date] += h * 60 + m;
+    return acc;
+  }, {});
+  const dailyData = Object.entries(dailyStats).map(([date, minutes]) => ({ date, minutes }));
+
   return (
     <div style={{ marginTop: 20 }}>
       <h2>המשימות שלך ל־{formatDate(new Date())}</h2>
       <p>סה״כ זמן עבודה: {totalHours}h {totalRemainder}m</p>
-      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
         <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>סיום משימה</button>
-        <button className="btn btn-primary" onClick={cancelTask} disabled={!timerActive}>בטל משימה</button>
-        <button className="btn btn-primary" onClick={downloadExcel}>יצוא לקובץ אקסל</button>
       </div>
+
       {timerActive && (
-        <p>
-          <strong>משימה:</strong> {taskName} | <strong>זמן:</strong> {formatElapsed(elapsed)}
-        </p>
+        <div>
+          <p><strong>{taskName}</strong> | {category} | {formatElapsed(elapsed)}</p>
+          <progress value={elapsed % 3600} max={3600} style={{ width: "100%", height: 20 }} />
+        </div>
       )}
+
       <ul>
         {logs.map((log) => (
           <li key={log.id}>
-            <span>🕒 <strong>{log.task}</strong> | {log.date} | {log.from} - {log.to} | {log.duration}</span>
+            <span>🕒 <strong>{log.task}</strong> ({log.category}) | {log.date} | {log.from} - {log.to} | {log.duration}</span>
+            <button onClick={() => editTask(log)}>✏️</button>
             <button onClick={() => deleteTask(log.id)}>🗑️</button>
           </li>
         ))}
       </ul>
+
+      <h3>סטטיסטיקות לפי קטגוריה</h3>
+      <ResponsiveContainer width="100%" height={250}>
+        <PieChart>
+          <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={80}>
+            {categoryData.map((entry, index) => (
+              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Legend />
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+
+      <h3>זמן עבודה יומי</h3>
+      <ResponsiveContainer width="100%" height={250}>
+        <BarChart data={dailyData}>
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="minutes" fill="#8884d8" />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
