@@ -1,4 +1,4 @@
-// UserManagementPanel.js - מציג שם המשתמש, וכולל אפשרות לערוך שם
+// UserManagementPanel.js - כולל עיצוב, תצוגת שם ומייל, כרטיסים יפים ומרוכזים
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -51,35 +51,52 @@ export default function UserManagementPanel({ onBack }) {
 
   return (
     <div className="container">
-      <h2>ניהול משתמשים</h2>
-      <button className="btn btn-primary" onClick={onBack}>חזור</button>
+      <h2 style={{ textAlign: "center" }}>ניהול משתמשים</h2>
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <button className="btn btn-primary" onClick={onBack}>חזור</button>
+      </div>
 
-      <ul style={{ marginTop: 20 }}>
+      <ul style={{ maxWidth: 600, margin: "0 auto", padding: 0 }}>
         {users.map(user => (
-          <li key={user.id}>
+          <li
+            key={user.id}
+            style={{
+              background: "#f0f2f5",
+              borderRadius: 12,
+              padding: 15,
+              marginBottom: 12,
+              listStyle: "none",
+              boxShadow: "0 0 6px rgba(0,0,0,0.08)"
+            }}
+          >
             {editId === user.id ? (
               <>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
+                  style={{ marginBottom: 8 }}
                 />
                 <button className="btn btn-login" onClick={saveEdit}>שמור שם</button>
               </>
             ) : (
               <>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span><strong>{user.name || user.email}</strong></span>
-                  <span>אימייל: {user.email}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span><strong>{user.name || "[ללא שם]"}</strong></span>
+                  <span>אימייל: {user.email || "[לא ידוע]"}</span>
                   <span>הרשאות ניהול: {user.isAdmin ? "✔️ כן" : "❌ לא"}</span>
                 </div>
-                <div style={{ display: "flex", gap: 10, marginTop: 5 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
                   <button className="btn btn-login" onClick={() => toggleAdmin(user)}>
                     שנה הרשאות ניהול
                   </button>
                   <button className="btn btn-login" onClick={() => startEdit(user)}>
                     ערוך שם
                   </button>
-                  <button className="btn btn-primary" style={{ backgroundColor: '#dc3545' }} onClick={() => deleteUser(user)}>
+                  <button
+                    className="btn btn-primary"
+                    style={{ backgroundColor: '#dc3545' }}
+                    onClick={() => deleteUser(user)}
+                  >
                     מחק משתמש
                   </button>
                 </div>
