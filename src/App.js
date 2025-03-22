@@ -1,14 +1,31 @@
-// App.js - כולל ניתוב עם React Router
-import React, { useState } from "react";
+// App.js - כולל ניתוב גם ל־UserManagementPanel
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase";
 import AuthForm from "./AuthForm";
 import TaskTracker from "./TaskTracker";
 import AdminPanel from "./AdminPanel";
+import UserManagementPanel from "./UserManagementPanel";
 import "./style.css";
 
 function App() {
   const [user, setUser] = useState(null);
-  const isAdmin = user && user.email === "eliran@example.com"; // שנה למייל שלך
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) return;
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setIsAdmin(data.isAdmin === true);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   return (
     <Router>
@@ -25,9 +42,12 @@ function App() {
           {user && (
             <div style={{ display: "flex", gap: "10px" }}>
               {isAdmin && (
-                <Link to="/admin" className="btn btn-login">ניהול קטגוריות</Link>
+                <>
+                  <Link to="/admin" className="btn btn-login">קטגוריות</Link>
+                  <Link to="/users" className="btn btn-login">משתמשים</Link>
+                </>
               )}
-              <button className="logout-btn" onClick={() => setUser(null)}>
+              <button className="logout-btn" onClick={() => { setUser(null); setIsAdmin(false); }}>
                 התנתקות
               </button>
             </div>
@@ -58,6 +78,19 @@ function App() {
               user && isAdmin ? (
                 <div className="container">
                   <AdminPanel user={user} onBack={() => window.history.back()} />
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              user && isAdmin ? (
+                <div className="container">
+                  <UserManagementPanel onBack={() => window.history.back()} />
                 </div>
               ) : (
                 <Navigate to="/" replace />
