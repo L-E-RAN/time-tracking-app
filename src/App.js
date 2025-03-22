@@ -51,6 +51,8 @@ export default function App() {
     }
   }, [taskName, startTime]);
 
+  <h1>Time Tracking App 💼</h1>
+
   const formatElapsed = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
