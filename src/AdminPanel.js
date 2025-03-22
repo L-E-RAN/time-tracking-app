@@ -1,95 +1,89 @@
-// src/AdminPanel.js
+// App.js - הרשאות ניהול מבוססות Firestore + ניתוב עם React Router
 import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc
-} from "firebase/firestore";
+import AuthForm from "./AuthForm";
+import TaskTracker from "./TaskTracker";
+import AdminPanel from "./AdminPanel";
+import "./style.css";
 
-export default function AdminPanel({ user, onBack }) {
-  const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState("");
-  const [editId, setEditId] = useState(null);
-  const [editValue, setEditValue] = useState("");
-
-  const fetchCategories = async () => {
-    const snapshot = await getDocs(collection(db, "categories"));
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setCategories(data);
-  };
+function App() {
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const handleAdd = async () => {
-    if (!newCategory.trim()) return;
-    await addDoc(collection(db, "categories"), { name: newCategory.trim() });
-    setNewCategory("");
-    fetchCategories();
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק את הקטגוריה?")) return;
-    await deleteDoc(doc(db, "categories", id));
-    fetchCategories();
-  };
-
-  const startEdit = (cat) => {
-    setEditId(cat.id);
-    setEditValue(cat.name);
-  };
-
-  const saveEdit = async () => {
-    if (!editValue.trim()) return;
-    await updateDoc(doc(db, "categories", editId), { name: editValue.trim() });
-    setEditId(null);
-    setEditValue("");
-    fetchCategories();
-  };
+    const checkAdmin = async () => {
+      if (!user) return;
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setIsAdmin(data.isAdmin === true);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   return (
-    <div className="container">
-      <h2>ניהול קטגוריות</h2>
-      <button className="btn btn-primary" onClick={onBack}>חזור</button>
+    <Router>
+      <header className="header">
+        <div className="header-content">
+          <div className="header-title">
+            <img
+              src="/logo192.png"
+              alt="Logo"
+              style={{ height: 32, verticalAlign: "middle", marginLeft: 10 }}
+            />
+            Time Tracking App
+          </div>
+          {user && (
+            <div style={{ display: "flex", gap: "10px" }}>
+              {isAdmin && (
+                <Link to="/admin" className="btn btn-login">ניהול קטגוריות</Link>
+              )}
+              <button className="logout-btn" onClick={() => { setUser(null); setIsAdmin(false); }}>
+                התנתקות
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
 
-      <div style={{ marginTop: 20 }}>
-        <input
-          type="text"
-          placeholder="הוסף קטגוריה חדשה"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-        />
-        <button className="btn btn-login" onClick={handleAdd}>הוסף</button>
-      </div>
-
-      <ul style={{ marginTop: 20 }}>
-        {categories.map(cat => (
-          <li key={cat.id}>
-            {editId === cat.id ? (
-              <>
-                <input
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                />
-                <button className="btn btn-login" onClick={saveEdit}>שמור</button>
-              </>
-            ) : (
-              <>
-                <span><strong>{cat.name}</strong></span>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button className="btn btn-login" onClick={() => startEdit(cat)}>ערוך</button>
-                  <button className="btn btn-primary" style={{ backgroundColor: '#dc3545' }} onClick={() => handleDelete(cat.id)}>מחק</button>
+      <main>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              !user ? (
+                <div className="container">
+                  <AuthForm onLogin={(u) => setUser(u)} />
                 </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
+              ) : (
+                <div className="container">
+                  <TaskTracker user={user} />
+                </div>
+              )
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              user && isAdmin ? (
+                <div className="container">
+                  <AdminPanel user={user} onBack={() => window.history.back()} />
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+        </Routes>
+      </main>
+    </Router>
   );
 }
+
+export default App;
