@@ -104,6 +104,19 @@ export default function TaskTracker({ user }) {
     }
   };
 
+  const cancelTask = () => {
+    if (!timerActive) return;
+    const confirmCancel = window.confirm("לבטל את המשימה הפעילה?");
+    if (confirmCancel) {
+      setTaskName("");
+      setStartTime(null);
+      setElapsed(0);
+      setTimerActive(false);
+      localStorage.removeItem("task_start");
+      localStorage.removeItem("task_name");
+    }
+  };
+
   const endTask = async () => {
     if (!taskName || !startTime) return alert("אין משימה פעילה כעת");
 
@@ -155,6 +168,7 @@ export default function TaskTracker({ user }) {
       <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
         <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>סיום משימה</button>
+        <button className="btn btn-primary" onClick={cancelTask} disabled={!timerActive}>בטל משימה</button>
         <button className="btn btn-primary" onClick={downloadExcel}>יצוא לקובץ אקסל</button>
       </div>
       {timerActive && (
