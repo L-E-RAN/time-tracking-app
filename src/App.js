@@ -1,6 +1,6 @@
-import TaskTracker from "./TaskTracker";
 
 // src/App.js
+import TaskTracker from "./TaskTracker";
 import React, { useState } from "react";
 import AuthForm from "./AuthForm";
 
@@ -15,7 +15,8 @@ function App() {
     <div style={{ padding: 20 }}>
       <h1>ברוך הבא {user.email}</h1>
       <button onClick={() => setUser(null)}>Logout</button>
-      {/* כאן נכניס את הדיווח משימות בהמשך */}
+  
+      <TaskTracker user={user} />
     </div>
   );
 }
