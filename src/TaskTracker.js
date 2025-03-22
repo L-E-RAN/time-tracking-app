@@ -69,7 +69,7 @@ export default function TaskTracker({ user }) {
   };
 
   const startTask = () => {
-    const name = prompt("Enter task name:");
+    const name = prompt("הכנס שם משימה:");
     if (name) {
       setTaskName(name);
       setStartTime(new Date());
@@ -79,7 +79,7 @@ export default function TaskTracker({ user }) {
   };
 
   const endTask = async () => {
-    if (!taskName || !startTime) return alert("No task in progress");
+    if (!taskName || !startTime) return alert("אין משימה פעילה כעת");
 
     const endTime = new Date();
     const durationMs = endTime - startTime;
@@ -125,13 +125,13 @@ export default function TaskTracker({ user }) {
       <h2>המשימות שלך ל־{formatDate(new Date())}</h2>
       <p>סה״כ זמן עבודה: {totalHours}h {totalRemainder}m</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "10px" }}>
-        <button className="btn btn-primary" onClick={startTask}>Start Task</button>
-        <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>End Task</button>
-        <button className="btn btn-primary" onClick={downloadExcel}>Download Excel</button>
+        <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
+        <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>סיום משימה</button>
+        <button className="btn btn-primary" onClick={downloadExcel}>יצוא לקובץ אקסל</button>
       </div>
       {timerActive && (
         <p>
-          <strong>Task:</strong> {taskName} | <strong>Elapsed:</strong> {formatElapsed(elapsed)}
+          <strong>משימה:</strong> {taskName} | <strong>זמן:</strong> {formatElapsed(elapsed)}
         </p>
       )}
       <ul>
