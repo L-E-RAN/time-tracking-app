@@ -1,4 +1,4 @@
-// TaskTracker.js - עדכון עיצוב כפתורים, עריכת קטגוריה עם dropdown, מיון הפוך של משימות, מרכז כפתורים, החזרת כפתור יצוא
+// TaskTracker.js - טעינת קטגוריות דינמית מ־Firestore
 
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
@@ -18,7 +18,6 @@ import {
 } from 'recharts';
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
-const CATEGORY_OPTIONS = ["פיתוח", "תמיכה", "שיווק", "מנהלה", "אחר"];
 
 export default function TaskTracker({ user }) {
   const [taskName, setTaskName] = useState("");
@@ -27,11 +26,22 @@ export default function TaskTracker({ user }) {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [totalMinutes, setTotalMinutes] = useState(0);
-  const [category, setCategory] = useState(CATEGORY_OPTIONS[0]);
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState([]);
   const [showCategorySelect, setShowCategorySelect] = useState(false);
   const [editLogId, setEditLogId] = useState(null);
   const [editCategory, setEditCategory] = useState("");
   const [editTaskName, setEditTaskName] = useState("");
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const snapshot = await getDocs(collection(db, "categories"));
+      const data = snapshot.docs.map(doc => doc.data().name);
+      setCategories(data);
+      if (data.length > 0) setCategory(data[0]);
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const savedStart = localStorage.getItem("task_start");
@@ -41,7 +51,7 @@ export default function TaskTracker({ user }) {
       const parsedStart = new Date(savedStart);
       setStartTime(parsedStart);
       setTaskName(savedName);
-      setCategory(savedCat || CATEGORY_OPTIONS[0]);
+      setCategory(savedCat || "");
       setTimerActive(true);
     }
   }, []);
@@ -118,7 +128,7 @@ export default function TaskTracker({ user }) {
       from: formatTime(startTime),
       to: formatTime(endTime),
       duration: `${hours}h ${minutes}m`,
-      category: category || CATEGORY_OPTIONS[0]
+      category: category || "לא מוגדר"
     };
 
     const docRef = await addDoc(collection(db, "tasks"), log);
@@ -126,7 +136,7 @@ export default function TaskTracker({ user }) {
     setTaskName("");
     setStartTime(null);
     setElapsed(0);
-    setCategory(CATEGORY_OPTIONS[0]);
+    setCategory(categories[0] || "");
     setTimerActive(false);
     localStorage.clear();
   };
@@ -139,7 +149,7 @@ export default function TaskTracker({ user }) {
   const startEditTask = (log) => {
     setEditLogId(log.id);
     setEditTaskName(log.task);
-    setEditCategory(log.category || CATEGORY_OPTIONS[0]);
+    setEditCategory(log.category || categories[0] || "");
   };
 
   const saveEditTask = async () => {
@@ -161,7 +171,7 @@ export default function TaskTracker({ user }) {
   const totalRemainder = totalMinutes % 60;
 
   const categoryStats = logs.reduce((acc, log) => {
-    const cat = log.category || CATEGORY_OPTIONS[0];
+    const cat = log.category || "לא מוגדר";
     const [h, m] = log.duration.replace("h", "").replace("m", "").split(" ").map(Number);
     acc[cat] = (acc[cat] || 0) + h * 60 + m;
     return acc;
@@ -191,7 +201,7 @@ export default function TaskTracker({ user }) {
         <div style={{ margin: "10px 0" }}>
           <label>בחר קטגוריה:</label>
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {CATEGORY_OPTIONS.map((opt) => (
+            {categories.map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
@@ -213,7 +223,7 @@ export default function TaskTracker({ user }) {
               <>
                 <input value={editTaskName} onChange={(e) => setEditTaskName(e.target.value)} />
                 <select value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
-                  {CATEGORY_OPTIONS.map((opt) => (
+                  {categories.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
