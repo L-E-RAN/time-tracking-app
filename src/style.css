@@ -81,7 +81,7 @@ button {
 }
 
 .btn {
-  width: 100%;
+  width: fit-content;
   padding: 10px 16px;
   border: none;
   border-radius: 8px;
@@ -89,6 +89,14 @@ button {
   font-weight: 500;
   cursor: pointer;
   margin-top: 10px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
 }
 
 .btn-login {
