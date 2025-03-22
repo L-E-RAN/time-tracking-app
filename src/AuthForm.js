@@ -1,4 +1,4 @@
-// AuthForm.js - הוספת שדה שם בעת הרשמה ושמירתו במסמך המשתמש
+// AuthForm.js - כולל השלמת שדות חסרים במסמך המשתמש בעת התחברות
 import React, { useState } from "react";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -27,14 +27,24 @@ export default function AuthForm({ onLogin }) {
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
 
+      const fullName = user.displayName || name || user.email.split("@")[0];
+
       if (!userSnap.exists()) {
         await setDoc(userRef, {
           email: user.email,
           isAdmin: false,
-          name: user.displayName || name || user.email.split("@")[0]
+          name: fullName
         });
-      } else if (!userSnap.data().name && name) {
-        await updateDoc(userRef, { name });
+      } else {
+        const userData = userSnap.data();
+        const updates = {};
+        if (!userData.email) updates.email = user.email;
+        if (!userData.name && fullName) updates.name = fullName;
+        if (typeof userData.isAdmin !== "boolean") updates.isAdmin = false;
+
+        if (Object.keys(updates).length > 0) {
+          await updateDoc(userRef, updates);
+        }
       }
 
       onLogin(user);
