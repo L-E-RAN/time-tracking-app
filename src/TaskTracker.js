@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import * as XLSX from "xlsx";
 
 export default function TaskTracker({ user }) {
@@ -9,6 +17,7 @@ export default function TaskTracker({ user }) {
   const [logs, setLogs] = useState([]);
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+  const [totalMinutes, setTotalMinutes] = useState(0);
 
   useEffect(() => {
     if (timerActive && startTime) {
@@ -26,11 +35,31 @@ export default function TaskTracker({ user }) {
         where("userId", "==", user.uid)
       );
       const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => doc.data());
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setLogs(data);
+
+      const today = formatDate(new Date());
+      const todayLogs = data.filter(log => log.date === today);
+      const minutes = todayLogs.reduce((sum, log) => {
+        const [h, m] = log.duration
+          .replace("h", "")
+          .replace("m", "")
+          .split(" ")
+          .map(Number);
+        return sum + h * 60 + m;
+      }, 0);
+      setTotalMinutes(minutes);
     };
     fetchLogs();
   }, [user]);
+
+  const formatDate = (dateObj) => {
+    const d = new Date(dateObj);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const formatElapsed = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -49,7 +78,6 @@ export default function TaskTracker({ user }) {
     }
   };
 
-  console.log("END TASK CLICKED");
   const endTask = async () => {
     if (!taskName || !startTime) return alert("No task in progress");
 
@@ -62,30 +90,40 @@ export default function TaskTracker({ user }) {
     const log = {
       userId: user.uid,
       task: taskName,
-      date: startTime.toLocaleDateString(),
+      date: formatDate(startTime),
       from: startTime.toLocaleTimeString(),
       to: endTime.toLocaleTimeString(),
       duration: `${hours}h ${minutes}m`,
     };
 
-    await addDoc(collection(db, "tasks"), log);
-    setLogs([...logs, log]);
+    const docRef = await addDoc(collection(db, "tasks"), log);
+    setLogs([...logs, { id: docRef.id, ...log }]);
     setTaskName("");
     setStartTime(null);
     setElapsed(0);
     setTimerActive(false);
   };
 
+  const deleteTask = async (id) => {
+    await deleteDoc(doc(db, "tasks", id));
+    setLogs(logs.filter((log) => log.id !== id));
+  };
+
   const downloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(logs);
+    const exportLogs = logs.map(({ id, ...rest }) => rest);
+    const worksheet = XLSX.utils.json_to_sheet(exportLogs);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Tasks");
     XLSX.writeFile(workbook, `tasks_${user.email}.xlsx`);
   };
 
+  const totalHours = Math.floor(totalMinutes / 60);
+  const totalRemainder = totalMinutes % 60;
+
   return (
     <div style={{ marginTop: 20 }}>
-      <h2>משימות שלך</h2>
+      <h2>המשימות שלך ל־{formatDate(new Date())}</h2>
+      <p>סה״כ זמן עבודה: {totalHours}h {totalRemainder}m</p>
       <button onClick={startTask}>Start Task</button>
       <button onClick={endTask} disabled={!timerActive}>End Task</button>
       <button onClick={downloadExcel}>Download Excel</button>
@@ -95,9 +133,10 @@ export default function TaskTracker({ user }) {
         </p>
       )}
       <ul>
-        {logs.map((log, index) => (
-          <li key={index}>
-            <strong>{log.task}</strong> | {log.date} | {log.from} - {log.to} | {log.duration}
+        {logs.map((log) => (
+          <li key={log.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>🕒 <strong>{log.task}</strong> | {log.date} | {log.from} - {log.to} | {log.duration}</span>
+            <button onClick={() => deleteTask(log.id)} style={{ background: "#dc3545", marginLeft: 10 }}>🗑️</button>
           </li>
         ))}
       </ul>
