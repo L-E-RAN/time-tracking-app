@@ -1,3 +1,5 @@
+console.log("App רונדר");
+
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
