@@ -217,7 +217,12 @@ export default function TaskTracker({ user }) {
   return (
     <>
       <h2>המשימות שלך</h2>
-      <p>סה״כ זמן עבודה: {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</p>
+      <p>
+        סה״כ זמן עבודה:{" "}
+        {isNaN(totalMinutes)
+          ? "0h 0m"
+          : `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`}
+      </p>
 
       <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
