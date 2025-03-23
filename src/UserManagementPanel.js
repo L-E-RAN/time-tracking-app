@@ -52,7 +52,7 @@ export default function UserManagementPanel({ onBack }) {
   };
 
   return (
-    <div className="container">
+    <>
       <h2>ניהול משתמשים</h2>
 
       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 20 }}>
@@ -91,6 +91,6 @@ export default function UserManagementPanel({ onBack }) {
       <button onClick={onBack} className="btn btn-primary" style={{ marginTop: 30 }}>
         חזור
       </button>
-    </div>
+    </>
   );
 }
