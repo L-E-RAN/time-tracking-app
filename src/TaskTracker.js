@@ -1,4 +1,3 @@
-console.log("TaskTracker נטען");
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -216,7 +215,7 @@ export default function TaskTracker({ user }) {
   );
 
   return (
-    <div className="container">
+    <>
       <h2>המשימות שלך</h2>
       <p>סה״כ זמן עבודה: {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</p>
 
@@ -291,6 +290,6 @@ export default function TaskTracker({ user }) {
           </ResponsiveContainer>
         </div>
       )}
-    </div>
+    </>
   );
 }
