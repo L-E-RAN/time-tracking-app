@@ -1,5 +1,3 @@
-// TaskTracker.js - גרסה מלאה עם עריכה, תצוגת משימות עבר, שמירה בדפדפן וגרפים
-
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -15,7 +13,7 @@ import {
 } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
@@ -34,7 +32,6 @@ export default function TaskTracker({ user }) {
   const [editCategory, setEditCategory] = useState("");
   const [editTaskName, setEditTaskName] = useState("");
 
-  // טעינת קטגוריות
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -50,7 +47,6 @@ export default function TaskTracker({ user }) {
     fetchCategories();
   }, []);
 
-  // טעינת משימות מהעבר
   useEffect(() => {
     const fetchLogs = async () => {
       try {
@@ -66,7 +62,7 @@ export default function TaskTracker({ user }) {
         }));
         setLogs(loadedLogs);
         const total = loadedLogs.reduce((sum, log) => {
-          const [h, m] = log.duration.split(" ").map(t => parseInt(t));
+          const [h, m] = log.duration.split(" ").map(Number);
           return sum + (h * 60 + m);
         }, 0);
         setTotalMinutes(total);
@@ -77,21 +73,21 @@ export default function TaskTracker({ user }) {
     fetchLogs();
   }, [user.uid]);
 
-  // שמירת משימה פעילה מ־localStorage
   useEffect(() => {
     const savedStart = localStorage.getItem("task_start");
     const savedName = localStorage.getItem("task_name");
     const savedCat = localStorage.getItem("task_category");
     if (savedStart && savedName) {
       const parsedStart = new Date(savedStart);
-      setStartTime(parsedStart);
-      setTaskName(savedName);
-      setCategory(savedCat || "");
-      setTimerActive(true);
+      if (!isNaN(parsedStart)) {
+        setStartTime(parsedStart);
+        setTaskName(savedName);
+        setCategory(savedCat || "");
+        setTimerActive(true);
+      }
     }
   }, []);
 
-  // טיימר רציף
   useEffect(() => {
     if (timerActive && startTime) {
       const interval = setInterval(() => {
@@ -116,7 +112,8 @@ export default function TaskTracker({ user }) {
       hour12: false
     });
 
-  const formatElapsed = (seconds) => `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m ${seconds % 60}s`;
+  const formatElapsed = (seconds) =>
+    `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m ${seconds % 60}s`;
 
   const startTask = () => {
     if (timerActive) return alert("יש כבר משימה פעילה!");
@@ -139,17 +136,18 @@ export default function TaskTracker({ user }) {
   };
 
   const endTask = async () => {
-    if (!taskName || !startTime) return alert("אין משימה פעילה");
+    const validStartTime = new Date(startTime);
+    if (!taskName || isNaN(validStartTime)) return alert("אין משימה פעילה");
     const endTime = new Date();
-    const durationMin = Math.floor((endTime - new Date(startTime)) / 60000);
+    const durationMin = Math.floor((endTime - validStartTime) / 60000);
     const hours = Math.floor(durationMin / 60);
     const minutes = durationMin % 60;
 
     const log = {
       userId: user.uid,
       task: taskName,
-      date: formatDate(startTime),
-      from: formatTime(startTime),
+      date: formatDate(validStartTime),
+      from: formatTime(validStartTime),
       to: formatTime(endTime),
       duration: `${hours} ${minutes}`,
       category: category || "לא מוגדר"
@@ -167,7 +165,7 @@ export default function TaskTracker({ user }) {
   };
 
   const deleteLog = async (id) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק?")) return;
+    if (!window.confirm("האם למחוק את המשימה?")) return;
     await deleteDoc(doc(db, "tasks", id));
     setLogs(prev => prev.filter(l => l.id !== id));
   };
@@ -183,7 +181,10 @@ export default function TaskTracker({ user }) {
       task: editTaskName,
       category: editCategory
     });
-    setLogs(prev => prev.map(l => l.id === editLogId ? { ...l, task: editTaskName, category: editCategory } : l));
+    setLogs(prev => prev.map(l => l.id === editLogId
+      ? { ...l, task: editTaskName, category: editCategory }
+      : l
+    ));
     setEditLogId(null);
   };
 
@@ -197,7 +198,7 @@ export default function TaskTracker({ user }) {
   const pieData = Object.values(
     logs.reduce((acc, log) => {
       acc[log.category] = acc[log.category] || { name: log.category, value: 0 };
-      const [h, m] = log.duration.split(" ").map(n => parseInt(n));
+      const [h, m] = log.duration.split(" ").map(Number);
       acc[log.category].value += h * 60 + m;
       return acc;
     }, {})
