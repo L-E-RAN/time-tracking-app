@@ -13,6 +13,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // מאזין למצב התחברות
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -53,11 +54,14 @@ function App() {
                   <Link to="/users" className="btn btn-login">משתמשים</Link>
                 </>
               )}
-              <button className="logout-btn" onClick={() => {
-                setUser(null);
-                setIsAdmin(false);
-                localStorage.clear();
-              }}>
+              <button
+                className="logout-btn"
+                onClick={() => {
+                  setUser(null);
+                  setIsAdmin(false);
+                  localStorage.clear();
+                }}
+              >
                 התנתקות
               </button>
             </div>
