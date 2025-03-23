@@ -1,4 +1,3 @@
-// App.js
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
@@ -14,7 +13,6 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // זיהוי משתמש מחובר (גם אחרי רענון)
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -55,7 +53,11 @@ function App() {
                   <Link to="/users" className="btn btn-login">משתמשים</Link>
                 </>
               )}
-              <button className="logout-btn" onClick={() => { setUser(null); setIsAdmin(false); localStorage.clear(); }}>
+              <button className="logout-btn" onClick={() => {
+                setUser(null);
+                setIsAdmin(false);
+                localStorage.clear();
+              }}>
                 התנתקות
               </button>
             </div>
@@ -73,7 +75,9 @@ function App() {
                   <AuthForm onLogin={(u) => setUser(u)} />
                 </div>
               ) : (
-                <TaskTracker user={user} />
+                <div className="container">
+                  <TaskTracker user={user} />
+                </div>
               )
             }
           />
