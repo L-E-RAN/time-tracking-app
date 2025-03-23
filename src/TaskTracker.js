@@ -137,7 +137,11 @@ export default function TaskTracker({ user }) {
 
   const endTask = async () => {
     const validStartTime = new Date(startTime);
-    if (!taskName || isNaN(validStartTime)) return alert("אין משימה פעילה");
+    if (!taskName || !(validStartTime instanceof Date) || isNaN(validStartTime)) {
+      alert("אין משימה פעילה");
+      return;
+    }
+
     const endTime = new Date();
     const durationMin = Math.floor((endTime - validStartTime) / 60000);
     const hours = Math.floor(durationMin / 60);
@@ -153,15 +157,20 @@ export default function TaskTracker({ user }) {
       category: category || "לא מוגדר"
     };
 
-    const docRef = await addDoc(collection(db, "tasks"), log);
-    setLogs(prev => [{ id: docRef.id, ...log }, ...prev]);
-    setTaskName("");
-    setStartTime(null);
-    setElapsed(0);
-    setCategory(categories[0] || "");
-    setTimerActive(false);
-    localStorage.clear();
-    setTotalMinutes(prev => prev + durationMin);
+    try {
+      const docRef = await addDoc(collection(db, "tasks"), log);
+      setLogs(prev => [{ id: docRef.id, ...log }, ...prev]);
+      setTaskName("");
+      setStartTime(null);
+      setElapsed(0);
+      setCategory(categories[0] || "");
+      setTimerActive(false);
+      localStorage.clear();
+      setTotalMinutes(prev => prev + durationMin);
+    } catch (error) {
+      console.error("שגיאה בעת שמירת המשימה:", error);
+      alert("אירעה שגיאה בעת שמירת המשימה. נסה שוב.");
+    }
   };
 
   const deleteLog = async (id) => {
