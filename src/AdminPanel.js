@@ -1,4 +1,3 @@
-console.log("AdminPanel נטען");
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -55,7 +54,7 @@ export default function AdminPanel({ user, onBack }) {
   };
 
   return (
-    <div className="container">
+    <>
       <h2>ניהול קטגוריות</h2>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: 20 }}>
@@ -82,6 +81,6 @@ export default function AdminPanel({ user, onBack }) {
       <button onClick={onBack} className="btn btn-primary" style={{ marginTop: 30 }}>
         חזור
       </button>
-    </div>
+    </>
   );
 }
