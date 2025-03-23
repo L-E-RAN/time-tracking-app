@@ -1,4 +1,3 @@
-// TaskTracker.js
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -9,8 +8,7 @@ import {
   getDocs,
   deleteDoc,
   doc,
-  updateDoc,
-  orderBy
+  updateDoc
 } from "firebase/firestore";
 import * as XLSX from "xlsx";
 import {
@@ -36,15 +34,10 @@ export default function TaskTracker({ user }) {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "categories"));
-        const data = snapshot.docs.map(doc => doc.data().name);
-        setCategories(data);
-        if (data.length > 0) setCategory(data[0]);
-      } catch (error) {
-        console.error("שגיאה בטעינת קטגוריות:", error);
-        setCategories([]);
-      }
+      const snapshot = await getDocs(collection(db, "categories"));
+      const data = snapshot.docs.map(doc => doc.data().name);
+      setCategories(data);
+      if (data.length > 0) setCategory(data[0]);
     };
     fetchCategories();
   }, []);
@@ -53,30 +46,32 @@ export default function TaskTracker({ user }) {
     if (!user) return;
     const fetchLogs = async () => {
       try {
-        const q = query(
-          collection(db, "tasks"),
-          where("userId", "==", user.uid),
-          orderBy("date", "desc")
-        );
+        const q = query(collection(db, "tasks"), where("userId", "==", user.uid));
         const snapshot = await getDocs(q);
         const loadedLogs = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
-        setLogs(loadedLogs);
+
+        // מיון לפי תאריך (מהחדש לישן) ואז לפי שעה
+        const sortedLogs = loadedLogs.sort((a, b) => {
+          if (a.date !== b.date) return b.date.localeCompare(a.date);
+          return a.from.localeCompare(b.from);
+        });
+
+        setLogs(sortedLogs);
 
         const todayStr = formatDate(new Date());
-
         let totalToday = 0;
         let totalAll = 0;
 
-        loadedLogs.forEach((log) => {
-          const [h, m] = log.duration.split(" ").map(Number);
+        sortedLogs.forEach(log => {
+          const [hStr, mStr] = (log.duration || "0 0").split(" ");
+          const h = parseInt(hStr) || 0;
+          const m = parseInt(mStr) || 0;
           const duration = h * 60 + m;
           totalAll += duration;
-          if (log.date === todayStr) {
-            totalToday += duration;
-          }
+          if (log.date === todayStr) totalToday += duration;
         });
 
         setTotalMinutesToday(totalToday);
@@ -114,10 +109,7 @@ export default function TaskTracker({ user }) {
 
   const formatDate = (dateObj) => {
     const d = new Date(dateObj);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
   };
 
   const formatTime = (dateObj) =>
@@ -221,7 +213,9 @@ export default function TaskTracker({ user }) {
   const pieData = Object.values(
     logs.reduce((acc, log) => {
       acc[log.category] = acc[log.category] || { name: log.category, value: 0 };
-      const [h, m] = log.duration.split(" ").map(Number);
+      const [hStr, mStr] = (log.duration || "0 0").split(" ");
+      const h = parseInt(hStr) || 0;
+      const m = parseInt(mStr) || 0;
       acc[log.category].value += h * 60 + m;
       return acc;
     }, {})
