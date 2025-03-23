@@ -48,6 +48,7 @@ export default function TaskTracker({ user }) {
   }, []);
 
   useEffect(() => {
+    if (!user) return;
     const fetchLogs = async () => {
       try {
         const q = query(
@@ -71,7 +72,7 @@ export default function TaskTracker({ user }) {
       }
     };
     fetchLogs();
-  }, [user.uid]);
+  }, [user]);
 
   useEffect(() => {
     const savedStart = localStorage.getItem("task_start");

@@ -1,7 +1,7 @@
-// App.js
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "./firebase";
 import AuthForm from "./AuthForm";
 import TaskTracker from "./TaskTracker";
@@ -13,19 +13,26 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // שמירה על התחברות גם לאחר רענון
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) return;
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        setIsAdmin(data.isAdmin === true);
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setIsAdmin(data.isAdmin === true);
+        } else {
+          setIsAdmin(false);
+        }
       } else {
+        setUser(null);
         setIsAdmin(false);
       }
-    };
-    checkAdmin();
-  }, [user]);
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <Router>
