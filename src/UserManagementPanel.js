@@ -1,60 +1,96 @@
-// App.js - כולל כפתור גישה ל־AdminPanel לפי מייל מנהל
-import React, { useState } from "react";
-import AuthForm from "./AuthForm";
-import TaskTracker from "./TaskTracker";
-import AdminPanel from "./AdminPanel";
-import "./style.css";
+import React, { useEffect, useState } from "react";
+import { db } from "./firebase";
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc
+} from "firebase/firestore";
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [showAdmin, setShowAdmin] = useState(false);
+export default function UserManagementPanel({ onBack }) {
+  const [users, setUsers] = useState([]);
 
-  const isAdmin = user && user.email === "eliran@example.com"; // שנה לפי המייל שלך
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "users"));
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setUsers(data);
+      } catch (error) {
+        console.error("שגיאה בטעינת משתמשים:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const toggleAdmin = async (id, current) => {
+    try {
+      await updateDoc(doc(db, "users", id), { isAdmin: !current });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === id ? { ...u, isAdmin: !current } : u
+        )
+      );
+    } catch (error) {
+      console.error("שגיאה בעדכון הרשאות:", error);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("האם למחוק את המשתמש?")) return;
+    try {
+      await deleteDoc(doc(db, "users", id));
+      setUsers(users.filter((u) => u.id !== id));
+    } catch (error) {
+      console.error("שגיאה במחיקת משתמש:", error);
+    }
+  };
 
   return (
-    <>
-      <header className="header">
-        <div className="header-content">
-          <div className="header-title">
-            <img
-              src="/logo192.png"
-              alt="Logo"
-              style={{ height: 32, verticalAlign: "middle", marginLeft: 10 }}
-            />
-            Time Tracking App
-          </div>
-          {user && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              {isAdmin && (
-                <button className="btn btn-login" onClick={() => setShowAdmin(!showAdmin)}>
-                  {showAdmin ? "חזור" : "ניהול קטגוריות"}
-                </button>
-              )}
-              <button className="logout-btn" onClick={() => setUser(null)}>
-                התנתקות
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
+    <div className="container">
+      <h2>ניהול משתמשים</h2>
 
-      <main>
-        {!user ? (
-          <div className="container">
-            <AuthForm onLogin={(u) => setUser(u)} />
-          </div>
-        ) : showAdmin ? (
-          <div className="container">
-            <AdminPanel user={user} onBack={() => setShowAdmin(false)} />
-          </div>
-        ) : (
-          <div className="container">
-            <TaskTracker user={user} />
-          </div>
-        )}
-      </main>
-    </>
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 20 }}>
+        <thead>
+          <tr>
+            <th>אימייל</th>
+            <th>הרשאת מנהל</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((u) => (
+            <tr key={u.id}>
+              <td>{u.email}</td>
+              <td>{u.isAdmin ? "✔️" : "❌"}</td>
+              <td>
+                <button
+                  className="btn btn-login"
+                  onClick={() => toggleAdmin(u.id, u.isAdmin)}
+                >
+                  שנה הרשאה
+                </button>
+                <button
+                  className="btn btn-primary"
+                  style={{ marginInlineStart: 8 }}
+                  onClick={() => deleteUser(u.id)}
+                >
+                  מחק
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <button onClick={onBack} className="btn btn-primary" style={{ marginTop: 30 }}>
+        חזור
+      </button>
+    </div>
   );
 }
-
-export default App;
