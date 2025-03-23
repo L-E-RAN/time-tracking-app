@@ -1,5 +1,6 @@
+// App.js
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "./firebase";
@@ -13,7 +14,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // שמירה על התחברות גם לאחר רענון
+  // זיהוי משתמש מחובר (גם אחרי רענון)
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -35,7 +36,7 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <>
       <header className="header">
         <div className="header-content">
           <div className="header-title">
@@ -104,7 +105,7 @@ function App() {
           />
         </Routes>
       </main>
-    </Router>
+    </>
   );
 }
 
