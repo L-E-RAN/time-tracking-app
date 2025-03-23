@@ -1,4 +1,4 @@
-// App.js - כולל ניתוב גם ל־UserManagementPanel
+// App.js
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
@@ -47,7 +47,7 @@ function App() {
                   <Link to="/users" className="btn btn-login">משתמשים</Link>
                 </>
               )}
-              <button className="logout-btn" onClick={() => { setUser(null); setIsAdmin(false); }}>
+              <button className="logout-btn" onClick={() => { setUser(null); setIsAdmin(false); localStorage.clear(); }}>
                 התנתקות
               </button>
             </div>
@@ -65,9 +65,7 @@ function App() {
                   <AuthForm onLogin={(u) => setUser(u)} />
                 </div>
               ) : (
-                <div className="container">
-                  <TaskTracker user={user} />
-                </div>
+                <TaskTracker user={user} />
               )
             }
           />
