@@ -1,3 +1,4 @@
+// TaskTracker.js
 import React, { useEffect, useState } from "react";
 import { db } from "./firebase";
 import {
@@ -24,7 +25,8 @@ export default function TaskTracker({ user }) {
   const [logs, setLogs] = useState([]);
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  const [totalMinutes, setTotalMinutes] = useState(0);
+  const [totalMinutesToday, setTotalMinutesToday] = useState(0);
+  const [totalMinutesAll, setTotalMinutesAll] = useState(0);
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [showStartForm, setShowStartForm] = useState(false);
@@ -62,11 +64,23 @@ export default function TaskTracker({ user }) {
           ...doc.data()
         }));
         setLogs(loadedLogs);
-        const total = loadedLogs.reduce((sum, log) => {
+
+        const todayStr = formatDate(new Date());
+
+        let totalToday = 0;
+        let totalAll = 0;
+
+        loadedLogs.forEach((log) => {
           const [h, m] = log.duration.split(" ").map(Number);
-          return sum + (h * 60 + m);
-        }, 0);
-        setTotalMinutes(total);
+          const duration = h * 60 + m;
+          totalAll += duration;
+          if (log.date === todayStr) {
+            totalToday += duration;
+          }
+        });
+
+        setTotalMinutesToday(totalToday);
+        setTotalMinutesAll(totalAll);
       } catch (error) {
         console.error("שגיאה בטעינת משימות:", error);
       }
@@ -167,7 +181,6 @@ export default function TaskTracker({ user }) {
       setCategory(categories[0] || "");
       setTimerActive(false);
       localStorage.clear();
-      setTotalMinutes(prev => prev + durationMin);
     } catch (error) {
       console.error("שגיאה בעת שמירת המשימה:", error);
       alert("אירעה שגיאה בעת שמירת המשימה. נסה שוב.");
@@ -218,10 +231,14 @@ export default function TaskTracker({ user }) {
     <>
       <h2>המשימות שלך</h2>
       <p>
-        סה״כ זמן עבודה:{" "}
-        {isNaN(totalMinutes)
+        סה״כ היום:{" "}
+        {isNaN(totalMinutesToday)
           ? "0h 0m"
-          : `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`}
+          : `${Math.floor(totalMinutesToday / 60)}h ${totalMinutesToday % 60}m`}{" "}
+        / סה״כ כללי:{" "}
+        {isNaN(totalMinutesAll)
+          ? "0h 0m"
+          : `${Math.floor(totalMinutesAll / 60)}h ${totalMinutesAll % 60}m`}
       </p>
 
       <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
