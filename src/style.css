@@ -180,17 +180,18 @@ progress {
 
 .header-buttons button,
 .header-buttons a {
-  width: 140px; /* כל הכפתורים בדיוק באותו רוחב */
-  height: 45px; /* כל הכפתורים בדיוק באותו גובה */
+  width: 150px; /* רוחב אחיד */
+  height: 50px; /* גובה אחיד */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 17px; /* טקסט אחיד */
   font-weight: bold;
   text-align: center;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
 }
+
 
 @media (max-width: 600px) {
   .container {
