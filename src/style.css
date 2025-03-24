@@ -147,6 +147,7 @@ progress {
   margin-top: 10px;
 }
 
+/* ✅ עיצוב חדש לתפריט ולכפתורים */
 .header {
   background-color: #2f3336;
   padding: 12px 20px;
@@ -169,6 +170,7 @@ progress {
   align-items: center;
 }
 
+/* ✅ התאמת כל הכפתורים באותו גודל */
 .header-buttons {
   display: flex;
   gap: 10px;
@@ -176,16 +178,18 @@ progress {
   justify-content: center;
 }
 
-/* ✅ התאמת כל הכפתורים באותו גודל */
 .header-buttons button,
 .header-buttons a {
-  min-width: 120px; /* כל הכפתורים באותו רוחב */
-  height: 45px; /* כל הכפתורים באותו גובה */
-  text-align: center;
-  font-size: 16px;
+  width: 140px; /* כל הכפתורים בדיוק באותו רוחב */
+  height: 45px; /* כל הכפתורים בדיוק באותו גובה */
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 8px;
+  padding: 10px;
 }
 
 @media (max-width: 600px) {
