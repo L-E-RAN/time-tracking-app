@@ -170,10 +170,17 @@ progress {
   align-items: center;
 }
 
+.header-buttons {
+  display: flex;
+  flex-wrap: nowrap; /* ביטול ירידת כפתורים לשורה חדשה */
+  justify-content: center;
+  gap: 10px;
+}
+
 .btn-logout,
 .btn-nav {
-  width: 160px; /* רוחב אחיד */
-  height: 50px; /* גובה אחיד */
+  width: 160px; /* כל הכפתורים בדיוק באותו רוחב */
+  height: 50px; /* כל הכפתורים בדיוק באותו גובה */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,6 +190,7 @@ progress {
   border-radius: 8px;
   padding: 0;
 }
+
 
 
 
