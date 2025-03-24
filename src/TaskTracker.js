@@ -216,7 +216,6 @@ export default function TaskTracker({ user }) {
     XLSX.utils.book_append_sheet(wb, ws, "Tasks");
     XLSX.writeFile(wb, "tasks.xlsx");
   };
-
   const pieData = Object.values(
     logs.reduce((acc, log) => {
       acc[log.category] = acc[log.category] || { name: log.category, value: 0 };
@@ -254,20 +253,26 @@ export default function TaskTracker({ user }) {
       </div>
 
       {showStartForm && (
-        <div style={{ marginTop: 20, background: "#f0f2f5", padding: 20, borderRadius: 12 }}>
-          <h4>פרטי התחלת משימה</h4>
+        <div className="task-start-box">
+          <h3>פרטי התחלת משימה</h3>
           <div className="task-form">
+            <label>שם משימה</label>
             <input
               type="text"
-              placeholder="שם משימה"
+              placeholder="לדוגמה: סידור קבצים"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
             />
+
+            <label>קטגוריה</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="">בחר קטגוריה</option>
               {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </select>
-            <button className="btn btn-login" onClick={confirmStartTask}>התחל</button>
+
+            <button className="btn btn-login" onClick={confirmStartTask}>
+              🚀 התחל
+            </button>
           </div>
         </div>
       )}
