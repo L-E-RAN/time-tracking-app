@@ -31,6 +31,7 @@ export default function TaskTracker({ user }) {
   const [editLogId, setEditLogId] = useState(null);
   const [editCategory, setEditCategory] = useState("");
   const [editTaskName, setEditTaskName] = useState("");
+  const [showAll, setShowAll] = useState(false); // חדש: סינון ברירת מחדל
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -53,7 +54,7 @@ export default function TaskTracker({ user }) {
           ...doc.data()
         }));
 
-        // מיון לפי תאריך (מהחדש לישן) ואז לפי שעה
+        // מיון לפי תאריך ואז שעה
         const sortedLogs = loadedLogs.sort((a, b) => {
           if (a.date !== b.date) return b.date.localeCompare(a.date);
           return a.from.localeCompare(b.from);
@@ -235,6 +236,12 @@ export default function TaskTracker({ user }) {
           : `${Math.floor(totalMinutesAll / 60)}h ${totalMinutesAll % 60}m`}
       </p>
 
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <button className="btn btn-login" onClick={() => setShowAll(!showAll)}>
+          {showAll ? "הצג רק את היום" : "הצג את כל המשימות"}
+        </button>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
         <button className="btn btn-primary" onClick={endTask} disabled={!timerActive}>סיום משימה</button>
@@ -244,50 +251,54 @@ export default function TaskTracker({ user }) {
       {showStartForm && (
         <div style={{ marginTop: 20, background: "#f0f2f5", padding: 20, borderRadius: 12 }}>
           <h4>פרטי התחלת משימה</h4>
-          <input
-            type="text"
-            placeholder="שם משימה"
-            value={taskName}
-            onChange={(e) => setTaskName(e.target.value)}
-          />
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">בחר קטגוריה</option>
-            {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
-          </select>
-          <button className="btn btn-login" onClick={confirmStartTask}>התחל</button>
+          <div className="task-form">
+            <input
+              type="text"
+              placeholder="שם משימה"
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+            />
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">בחר קטגוריה</option>
+              {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
+            </select>
+            <button className="btn btn-login" onClick={confirmStartTask}>התחל</button>
+          </div>
         </div>
       )}
 
       {timerActive && (
         <div style={{ textAlign: "center", marginTop: 20 }}>
           <p><strong>{taskName}</strong> | {category} | {formatElapsed(elapsed)}</p>
-          <progress value={elapsed % 3600} max={3600} style={{ width: "100%", height: 20 }} />
+          <progress value={elapsed % 3600} max={3600} />
         </div>
       )}
 
       <ul style={{ marginTop: 30 }}>
-        {logs.map(log => (
-          <li key={log.id}>
-            {editLogId === log.id ? (
-              <>
-                <input value={editTaskName} onChange={e => setEditTaskName(e.target.value)} />
-                <select value={editCategory} onChange={e => setEditCategory(e.target.value)}>
-                  {categories.map((c, i) => <option key={i}>{c}</option>)}
-                </select>
-                <button className="btn btn-login" onClick={saveEdit}>שמור</button>
-              </>
-            ) : (
-              <>
-                <span>
-                  {log.date} | {log.task} | {log.category} | {log.from}-{log.to} | {log.duration}
-                </span>
-                <div>
-                  <button onClick={() => startEdit(log)}>✏️</button>
-                  <button onClick={() => deleteLog(log.id)}>🗑️</button>
-                </div>
-              </>
-            )}
-          </li>
+        {logs
+          .filter(log => showAll || log.date === formatDate(new Date()))
+          .map(log => (
+            <li key={log.id}>
+              {editLogId === log.id ? (
+                <>
+                  <input value={editTaskName} onChange={e => setEditTaskName(e.target.value)} />
+                  <select value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                    {categories.map((c, i) => <option key={i}>{c}</option>)}
+                  </select>
+                  <button className="btn btn-login" onClick={saveEdit}>שמור</button>
+                </>
+              ) : (
+                <>
+                  <span>
+                    {log.date} | {log.task} | {log.category} | {log.from}-{log.to} | {log.duration}
+                  </span>
+                  <div>
+                    <button onClick={() => startEdit(log)}>✏️</button>
+                    <button onClick={() => deleteLog(log.id)}>🗑️</button>
+                  </div>
+                </>
+              )}
+            </li>
         ))}
       </ul>
 
