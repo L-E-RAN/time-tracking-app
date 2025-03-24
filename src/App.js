@@ -1,7 +1,7 @@
 console.log("App רונדר");
 
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate, NavLink } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "./firebase";
@@ -49,15 +49,19 @@ function App() {
             Time Tracking App
           </div>
           {user && (
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div className="header-buttons">
               {isAdmin && (
                 <>
-                  <Link to="/admin" className="btn btn-login">קטגוריות</Link>
-                  <Link to="/users" className="btn btn-login">משתמשים</Link>
+                  <NavLink to="/admin" className="btn btn-nav" activeclassname="active">
+                    קטגוריות
+                  </NavLink>
+                  <NavLink to="/users" className="btn btn-nav" activeclassname="active">
+                    משתמשים
+                  </NavLink>
                 </>
               )}
               <button
-                className="logout-btn"
+                className="btn btn-logout"
                 onClick={() => {
                   setUser(null);
                   setIsAdmin(false);
