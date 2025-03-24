@@ -44,7 +44,7 @@ function App() {
             <img
               style={{ height: 32, verticalAlign: "middle", marginLeft: 10 }}
             />
-            אפליקציית המשימות שלך
+             עדכון משימות יומי
           </div>
           {user && (
             <div className="header-buttons">
