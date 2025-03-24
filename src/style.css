@@ -188,3 +188,26 @@ p {
   height: 44px; /* 👈 מוסיף גובה אחיד כמו input */
   box-sizing: border-box;
 }
+.header-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.header-buttons button {
+  min-width: 100px;
+  height: 40px;
+  font-weight: bold;
+  border-radius: 8px;
+  font-size: 15px;
+  padding: 8px 16px;
+}
+
+.logout-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.nav-btn {
+  background-color: #28a745;
+  color: white;
+}
