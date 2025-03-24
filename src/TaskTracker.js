@@ -24,7 +24,7 @@ export default function TaskTracker({ user }) {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [totalMinutesToday, setTotalMinutesToday] = useState(0);
-  const [totalMinutesAll, setTotalMinutesAll] = useState(0);
+  const [totalMinutesThisWeek, setTotalMinutesThisWeek] = useState(0);
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [showStartForm, setShowStartForm] = useState(false);
@@ -38,6 +38,17 @@ export default function TaskTracker({ user }) {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return `${h} ${h === 1 ? "שעה" : "שעות"} ו־${m} ${m === 1 ? "דקה" : "דקות"}`;
+  };
+
+  const isThisWeek = (dateStr) => {
+    const [day, month, year] = dateStr.split("/").map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // ראשון = 0
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - dayOfWeek);
+    sunday.setHours(0, 0, 0, 0);
+    return date >= sunday;
   };
 
   useEffect(() => {
@@ -70,19 +81,19 @@ export default function TaskTracker({ user }) {
 
         const todayStr = formatDate(new Date());
         let totalToday = 0;
-        let totalAll = 0;
+        let totalWeek = 0;
 
         sortedLogs.forEach(log => {
           const [hStr, mStr] = (log.duration || "0 0").split(" ");
           const h = parseInt(hStr) || 0;
           const m = parseInt(mStr) || 0;
           const duration = h * 60 + m;
-          totalAll += duration;
           if (log.date === todayStr) totalToday += duration;
+          if (isThisWeek(log.date)) totalWeek += duration;
         });
 
         setTotalMinutesToday(totalToday);
-        setTotalMinutesAll(totalAll);
+        setTotalMinutesThisWeek(totalWeek);
       } catch (error) {
         console.error("שגיאה בטעינת משימות:", error);
       }
@@ -113,7 +124,6 @@ export default function TaskTracker({ user }) {
       return () => clearInterval(interval);
     }
   }, [timerActive, startTime]);
-
   const formatDate = (dateObj) => {
     const d = new Date(dateObj);
     return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
@@ -236,7 +246,7 @@ export default function TaskTracker({ user }) {
           סה״כ היום: {formatTimeHebrew(totalMinutesToday)}
         </div>
         <div style={{ fontSize: "1em", marginTop: 5 }}>
-          סה״כ כללי: {formatTimeHebrew(totalMinutesAll)}
+          סה״כ שבועי: {formatTimeHebrew(totalMinutesThisWeek)}
         </div>
       </div>
 
