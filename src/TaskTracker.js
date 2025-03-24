@@ -31,7 +31,14 @@ export default function TaskTracker({ user }) {
   const [editLogId, setEditLogId] = useState(null);
   const [editCategory, setEditCategory] = useState("");
   const [editTaskName, setEditTaskName] = useState("");
-  const [showAll, setShowAll] = useState(false); // חדש: סינון ברירת מחדל
+  const [showAll, setShowAll] = useState(false);
+
+  const formatTimeHebrew = (minutes) => {
+    if (isNaN(minutes)) return "0 שעות ו־0 דקות";
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h} ${h === 1 ? "שעה" : "שעות"} ו־${m} ${m === 1 ? "דקה" : "דקות"}`;
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -54,7 +61,6 @@ export default function TaskTracker({ user }) {
           ...doc.data()
         }));
 
-        // מיון לפי תאריך ואז שעה
         const sortedLogs = loadedLogs.sort((a, b) => {
           if (a.date !== b.date) return b.date.localeCompare(a.date);
           return a.from.localeCompare(b.from);
@@ -225,16 +231,15 @@ export default function TaskTracker({ user }) {
   return (
     <>
       <h2>המשימות שלך</h2>
-      <p>
-        סה״כ היום:{" "}
-        {isNaN(totalMinutesToday)
-          ? "0h 0m"
-          : `${Math.floor(totalMinutesToday / 60)}h ${totalMinutesToday % 60}m`}{" "}
-        / סה״כ כללי:{" "}
-        {isNaN(totalMinutesAll)
-          ? "0h 0m"
-          : `${Math.floor(totalMinutesAll / 60)}h ${totalMinutesAll % 60}m`}
-      </p>
+
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <div style={{ fontSize: "1.6em", fontWeight: "bold" }}>
+          סה״כ היום: {formatTimeHebrew(totalMinutesToday)}
+        </div>
+        <div style={{ fontSize: "1em", marginTop: 5 }}>
+          סה״כ כללי: {formatTimeHebrew(totalMinutesAll)}
+        </div>
+      </div>
 
       <div style={{ textAlign: "center", marginBottom: 20 }}>
         <button className="btn btn-login" onClick={() => setShowAll(!showAll)}>
