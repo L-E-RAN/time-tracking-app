@@ -180,3 +180,11 @@ p {
     width: 100%;
   }
 }
+.task-form select {
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  height: 44px; /* 👈 מוסיף גובה אחיד כמו input */
+  box-sizing: border-box;
+}
