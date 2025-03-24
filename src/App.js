@@ -42,8 +42,6 @@ function App() {
         <div className="header-content">
           <div className="header-title">
             <img
-              src="/logo192.png"
-              alt="Logo"
               style={{ height: 32, verticalAlign: "middle", marginLeft: 10 }}
             />
             Time Tracking App
