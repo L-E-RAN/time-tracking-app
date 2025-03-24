@@ -44,7 +44,7 @@ function App() {
             <img
               style={{ height: 32, verticalAlign: "middle", marginLeft: 10 }}
             />
-            Time Tracking App
+            אפליקציית המשימות שלך
           </div>
           {user && (
             <div className="header-buttons">
