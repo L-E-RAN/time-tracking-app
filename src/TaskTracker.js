@@ -266,15 +266,15 @@ export default function TaskTracker({ user }) {
         <div className="task-start-box">
           <h3>פרטי התחלת משימה</h3>
           <div className="task-form">
-            <label>שם משימה</label>
+            <label>שם משימה:</label>
             <input
               type="text"
-              placeholder="לדוגמה: סידור קבצים"
+              placeholder="לדוגמה: תקלה לא צפוייה"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
             />
 
-            <label>קטגוריה</label>
+            <label>קטגוריה: </label>
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="">בחר קטגוריה</option>
               {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
