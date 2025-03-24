@@ -24,13 +24,32 @@ export default function TaskTracker({ user }) {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [totalMinutesToday, setTotalMinutesToday] = useState(0);
-  const [totalMinutesAll, setTotalMinutesAll] = useState(0);
+  const [totalMinutesThisWeek, setTotalMinutesThisWeek] = useState(0);
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [showStartForm, setShowStartForm] = useState(false);
   const [editLogId, setEditLogId] = useState(null);
   const [editCategory, setEditCategory] = useState("");
   const [editTaskName, setEditTaskName] = useState("");
+  const [showAll, setShowAll] = useState(false);
+
+  const formatTimeHebrew = (minutes) => {
+    if (isNaN(minutes)) return "0 שעות ו־0 דקות";
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h} ${h === 1 ? "שעה" : "שעות"} ו־${m} ${m === 1 ? "דקה" : "דקות"}`;
+  };
+
+  const isThisWeek = (dateStr) => {
+    const [day, month, year] = dateStr.split("/").map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // ראשון = 0
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - dayOfWeek);
+    sunday.setHours(0, 0, 0, 0);
+    return date >= sunday;
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -53,7 +72,6 @@ export default function TaskTracker({ user }) {
           ...doc.data()
         }));
 
-        // מיון לפי תאריך (מהחדש לישן) ואז לפי שעה
         const sortedLogs = loadedLogs.sort((a, b) => {
           if (a.date !== b.date) return b.date.localeCompare(a.date);
           return a.from.localeCompare(b.from);
@@ -63,19 +81,19 @@ export default function TaskTracker({ user }) {
 
         const todayStr = formatDate(new Date());
         let totalToday = 0;
-        let totalAll = 0;
+        let totalWeek = 0;
 
         sortedLogs.forEach(log => {
           const [hStr, mStr] = (log.duration || "0 0").split(" ");
           const h = parseInt(hStr) || 0;
           const m = parseInt(mStr) || 0;
           const duration = h * 60 + m;
-          totalAll += duration;
           if (log.date === todayStr) totalToday += duration;
+          if (isThisWeek(log.date)) totalWeek += duration;
         });
 
         setTotalMinutesToday(totalToday);
-        setTotalMinutesAll(totalAll);
+        setTotalMinutesThisWeek(totalWeek);
       } catch (error) {
         console.error("שגיאה בטעינת משימות:", error);
       }
@@ -106,7 +124,6 @@ export default function TaskTracker({ user }) {
       return () => clearInterval(interval);
     }
   }, [timerActive, startTime]);
-
   const formatDate = (dateObj) => {
     const d = new Date(dateObj);
     return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
@@ -209,7 +226,6 @@ export default function TaskTracker({ user }) {
     XLSX.utils.book_append_sheet(wb, ws, "Tasks");
     XLSX.writeFile(wb, "tasks.xlsx");
   };
-
   const pieData = Object.values(
     logs.reduce((acc, log) => {
       acc[log.category] = acc[log.category] || { name: log.category, value: 0 };
@@ -224,16 +240,21 @@ export default function TaskTracker({ user }) {
   return (
     <>
       <h2>המשימות שלך</h2>
-      <p>
-        סה״כ היום:{" "}
-        {isNaN(totalMinutesToday)
-          ? "0h 0m"
-          : `${Math.floor(totalMinutesToday / 60)}h ${totalMinutesToday % 60}m`}{" "}
-        / סה״כ כללי:{" "}
-        {isNaN(totalMinutesAll)
-          ? "0h 0m"
-          : `${Math.floor(totalMinutesAll / 60)}h ${totalMinutesAll % 60}m`}
-      </p>
+
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <div style={{ fontSize: "1.6em", fontWeight: "bold" }}>
+          סה״כ היום: {formatTimeHebrew(totalMinutesToday)}
+        </div>
+        <div style={{ fontSize: "1em", marginTop: 5 }}>
+          סה״כ שבועי: {formatTimeHebrew(totalMinutesThisWeek)}
+        </div>
+      </div>
+
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <button className="btn btn-login" onClick={() => setShowAll(!showAll)}>
+          {showAll ? "הצג רק את היום" : "הצג את כל המשימות"}
+        </button>
+      </div>
 
       <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
         <button className="btn btn-primary" onClick={startTask}>התחל משימה</button>
@@ -242,52 +263,62 @@ export default function TaskTracker({ user }) {
       </div>
 
       {showStartForm && (
-        <div style={{ marginTop: 20, background: "#f0f2f5", padding: 20, borderRadius: 12 }}>
-          <h4>פרטי התחלת משימה</h4>
-          <input
-            type="text"
-            placeholder="שם משימה"
-            value={taskName}
-            onChange={(e) => setTaskName(e.target.value)}
-          />
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">בחר קטגוריה</option>
-            {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
-          </select>
-          <button className="btn btn-login" onClick={confirmStartTask}>התחל</button>
+        <div className="task-start-box">
+          <h3>פרטי התחלת משימה</h3>
+          <div className="task-form">
+            <label>שם משימה:</label>
+            <input
+              type="text"
+              placeholder="לדוגמה: תקלה לא צפוייה"
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+            />
+
+            <label>קטגוריה: </label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">בחר קטגוריה</option>
+              {categories.map((c, i) => <option key={i} value={c}>{c}</option>)}
+            </select>
+
+            <button className="btn btn-login" onClick={confirmStartTask}>
+              🚀 התחל
+            </button>
+          </div>
         </div>
       )}
 
       {timerActive && (
         <div style={{ textAlign: "center", marginTop: 20 }}>
           <p><strong>{taskName}</strong> | {category} | {formatElapsed(elapsed)}</p>
-          <progress value={elapsed % 3600} max={3600} style={{ width: "100%", height: 20 }} />
+          <progress value={elapsed % 3600} max={3600} />
         </div>
       )}
 
       <ul style={{ marginTop: 30 }}>
-        {logs.map(log => (
-          <li key={log.id}>
-            {editLogId === log.id ? (
-              <>
-                <input value={editTaskName} onChange={e => setEditTaskName(e.target.value)} />
-                <select value={editCategory} onChange={e => setEditCategory(e.target.value)}>
-                  {categories.map((c, i) => <option key={i}>{c}</option>)}
-                </select>
-                <button className="btn btn-login" onClick={saveEdit}>שמור</button>
-              </>
-            ) : (
-              <>
-                <span>
-                  {log.date} | {log.task} | {log.category} | {log.from}-{log.to} | {log.duration}
-                </span>
-                <div>
-                  <button onClick={() => startEdit(log)}>✏️</button>
-                  <button onClick={() => deleteLog(log.id)}>🗑️</button>
-                </div>
-              </>
-            )}
-          </li>
+        {logs
+          .filter(log => showAll || log.date === formatDate(new Date()))
+          .map(log => (
+            <li key={log.id}>
+              {editLogId === log.id ? (
+                <>
+                  <input value={editTaskName} onChange={e => setEditTaskName(e.target.value)} />
+                  <select value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                    {categories.map((c, i) => <option key={i}>{c}</option>)}
+                  </select>
+                  <button className="btn btn-login" onClick={saveEdit}>שמור</button>
+                </>
+              ) : (
+                <>
+                  <span>
+                    {log.date} | {log.task} | {log.category} | {log.from}-{log.to} | {log.duration}
+                  </span>
+                  <div>
+                    <button onClick={() => startEdit(log)}>✏️</button>
+                    <button onClick={() => deleteLog(log.id)}>🗑️</button>
+                  </div>
+                </>
+              )}
+            </li>
         ))}
       </ul>
 
