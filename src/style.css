@@ -154,8 +154,11 @@ progress {
 
 .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* היה space-between */
   align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  text-align: center;
 }
 
 .header-title {
